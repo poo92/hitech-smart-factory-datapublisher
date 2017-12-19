@@ -1,0 +1,239 @@
+README
+
+The MODBUS protocol implementation in pure java.
+
+The main advantages of the library are following:
+- the library supports a lot of communication libraries (jssc, rxtx, purejavacomm, java comm api); 
+- the library has (practically) complete implementation of the modbus protocol v1.1b.
+
+AUTHORS
+
+Vladislav Y. Kochedykov, software engineer, technical expert.
+
+CONTACT
+
+If you have problems, questions or suggestions, please contact me at email address vladislav.kochedykov@gmail.com
+
+To learn how to use the library you can either use examples in "examples\com\invertor\examples\modbus" folder or contact me at email.
+
+Maven dependency:
+
+The latest stable release.
+<dependency>
+  <groupId>com.intelligt.modbus</groupId>
+  <artifactId>jlibmodbus</artifactId>
+  <version>1.2.9.1</version>
+</dependency>
+
+The previous stable release.
+<dependency>
+  <groupId>com.github.kochedykov</groupId>
+  <artifactId>jlibmodbus</artifactId>
+  <version>1.2.8.4</version>
+</dependency>
+
+WEB SITE
+
+project homepage:
+http://jlibmodbus.sourceforge.net
+https://github.com/kochedykov/jlibmodbus
+
+purejavacomm homepage:
+http://www.sparetimelabs.com/purejavacomm/purejavacomm.php
+
+jssc home page:
+https://code.google.com/p/java-simple-serial-connector
+https://github.com/scream3r/java-simple-serial-connector
+
+rxtx home page:
+http://users.frii.com/jarvi/rxtx/index.html
+
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.2.9.2 -------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+	* Fixed bug with setting timeout in SerialPortLoopback.
+	* Fixed bug with setting the slave timeout.
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.2.9.1 -------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+This release contains important bug fixes. Added the jSerialComm library support.
+	* Experimental! Implemented RTU over TCP. Add a new serial port factories TcpClient and TcpServer. Usage: //server side SerialUtils.setSerialPortFactory(new SerialPortFactoryTcpServer(tcpParameters)); ModbusSlave slave = ModbusSlaveFactory.createModbusSlaveRTU(serialParameters);
+	* Important! Fixed bug in setRange method #15.
+	* Added ModbusSlaveSerialObserver and SerialPortInfo classes to notify if the com port was opened or closed.
+	* Important! Added the jSerialComm library support.
+	* Important! Fixed bug in DataHolder class #14. Description checkPointer call in readCoilRange method needs to be fixed. coils field should be passed as parameter instead of holdingRegisters.
+	* Added API to retrieve information about a TCP client connected to the TCP slave.
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.2.9.0 -------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+This release contains important bug fixes and improvements.
+	NEWS
+	* IMPORTANT! Renamed package from com.invertor.modbus to com.intelligt.modbus.jlibmodbus! 
+	* IMPORTANT! Change default read timeout to one second.
+	* Added new examples.
+	* Fixed bug in GetCommEventLog.
+	* Added data frame events to Input/Output streams.
+	* Added loopback serial port for testing applications without actual serial hardware. Author Kevin Kieffer.
+	* Added method ReadCoilsResponse#getModbusCoils that returns a ModbusCoils instance.
+	* Fixed bug in ModbusValue#next().
+	* Fixed errors in data conversion operations.
+	* Added method ReadHoldingRegisters#getHoldingRegisters that returns a ModbusHoldingRegisters instance.
+	* Renamed getBytes -> getBytesBe.
+	* Renamed Coils->ModbusCoils, HoldingRegistors->ModbusHoldingRegisters.
+	* Added class ModbusValues.
+	* Renamed getValues -> getBytes, setValues -> setBytes.
+	* Added additional helpers.
+	* Added BroadcastResponse class to avoid timeout exception while sending broadcast requests.
+	* Fixed incorrect logic if crc equals zero. Thanks to flooduk (https://github.com/flooduk).
+	* Fixed handling of broadcast requests.
+	* Fixed handling of RestartCommunicationsOption.
+	* Optimized memory usage.
+	* Fixed the MIN_PDU_LENGTH value.
+	* Reduced copy operations number.
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.2.8.4 -------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+This release contains some improvements including maven support.
+	NEWS
+	* added a new constructor WriteMultipleRegistersRequest(int serverAddress, int startAddress, byte[] bytes) and a factory method createWriteMultipleRegisters(int serverAddress, int startAddress, byte[] bytes).
+	* added basic maven pom file
+	* ModbusMaster#processRequest public.
+	* thread safety. thanks to Kevin Kieffer.
+	* HoldingRegisters and Coils is now observable. thanks to Kevin Kieffer.
+	* added a method to get a byte-buffer from ReadHoldingRegistersResponse.
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.2.8.3 -------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+The release contains important bug fix.
+	NEWS
+	* IMPORTANT! fixed bug #1 Support of SlaveID=255 with ModbusTCP. Thanks to Francois DELOYE (https://sourceforge.net/u/sesa258801).
+	* added broadcast support.
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.2.8.2 -------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+This release contains one minor bug fix and some API changes.
+	NEWS
+	* added new method - SerialUtils#getConnectorVersion.
+	* fixed bug in ModbusMaster#disconnectImpl. Thanks to dpozimski (https://github.com/dpozimski)!
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.2.8.1 -------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+This release contains one minor bug fix and some API changes.
+	NEWS
+	* fixed a minor bug: setting of the "connected" status had no effect.
+	* added ModbuMaster#connectImpl and ModbusMaster#disconnectImpl methods.
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.2.8 ---------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+This release contains important bug fix.
+	NEWS
+	* added isConnected, which returns true if a master is connected to a remote slave.
+	* added isListening method, which returns true if a slave is already listening for incoming connections.
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.2.7 ---------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+This release contains important bug fix.
+	NEWS
+	* IMPORTANT! fixed bug with reading of multiple values in request.
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.2.6 ---------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+This release contains some bug fixes and API changes.
+	NEWS
+	* fixed bug with null-pointer-exception thrown if setReadTimeout is invoked before port has been opened.
+	* IMPORTANT! Added support for PureJavaComm!
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.2.5 ---------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+This release contains some bug fixes and API changes.
+	NEWS
+	* Added new example.
+	* Added readTimeout to ModbusSlave. 
+	* API changes: Deleted a few factory-methods from ModbusMasterFactory and ModbusSlaveFactory.
+	* API changes: Renamed ModbusEvent to ModbusCommEvent.
+	* API changes: added new methods Coils#quantity() and HoldingRegisters#quantity().
+	* API changes: ModbusSlaver#open() -> ModbusSlaver#listen(), ModbusSlaver#close() -> ModbusSlaver#shutdown().
+	* API changes: ModbusMaster#open() -> ModbusMaster#connect(), ModbusMaster#close() -> ModbusMaster#disconnect().
+	* fixed bug that type of quantity must be double or float before it'll be divided.
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.2.4 ---------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+This release contains bug fixes and performance improvments.
+	NEWS
+	* fixed bug with address and quantity checking in ReadCoilsRequest#checkAddressRange.
+	* improved search of a ModbusFunctionCode instance by value.
+	* fixed issues found by FindBug utility(http://findbugs.sourceforge.net).
+	* fixed bug with SerialPortJSSC#read(byte[] b, int off, int len) method.
+	* fixed bug: setting readTimeout before opening of a connection had no effect.
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.2.3 ---------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+This release contains some improvements.
+	NEWS
+	* added an echo generating a class to obtain the version of the library.
+	* improved logger output.
+	* added method getPortIdentifiers to get a list of available port identifiers.
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.2.2 ---------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+Since this release the library is destributed under Apache license version 2.0. Also, added support of the java communication api 3.0.
+	NEWS
+	* IMPORTANT! added support for java communication api 3.0.
+	* IMPORTANT! migration to the apache license version 2.0.
+	* purgeRx, purgeTx, clear methods have been removed from SerialPort class.
+	* "reset" method has been removed from ModbusConnection.
+	* fixed potential bug with infinite loop in ModbusMaster.readResponse.
+	* added method ModbusConnection.getReadTimeout.
+	* prevents a NullPointerException if master is used before it has been opened.
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.2.1 ---------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+This release contains some improvements and some bug fixes. Also, the RXTX library is currently supported.
+	NEWS:
+	* IMPORTANT! the RXTX library is now supported! You should invoke SerialUtils.setSerialPortFactory(new SerialPortFactoryRXTX()); before you'll have created a master or a slave.
+	* added checking if jssc library is available
+	* fixed potential bug with reading of byte array.
+	* avoiding some NullPointerException exceptions.
+	* IMPORTANT! fixed bug with flushing of output buffers.
+	* modbus rtu master is now able to connect via tcp socket(in case of rs232/rs485 to wifi adapters).
+	* added abstraction of concrete serial port implementation.
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.2 -----------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+This release contains some improvements.
+	NEWS:
+	* Added extended logging.
+	* Auto increment of transaction id is currently supported. see Modbus.setAutoIncrementTransactionId.
+	* Refactoring.
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.1 -----------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+This release contains important fixes. Also, debugging information such as names of variables has been added.
+	NEWS:
+	* Important! fixed bug with read of starting address.
+	* Important! fixed data conversion issues.
+
+-----------------------------------------------------------------------------------------------------------
+----Release version 1.0 -----------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+Implemented:
+
+1.  Read Coils(0x1)
+2.  Read Discrete Inputs(0x2)
+3.  Read Holding Registers(0x3)
+4.  Read Input Registers(0x4)
+5.  Write Single Coil(0x5)
+6.  Write Single Register(0x6)
+7.  Read Exception Status(0x7, serial line only)
+8.  Diagnostics(0x8, serial line only)
+9.  Get Comm Event Counter(0x0B, serial line only)
+10. Get Comm Event Log(0x0C, serial line only)
+11. Write Multiple Coils(0x0F)
+12. Write Multiple Registers(0x10)
+13. Report Slave Id(0x11, serial line only)
+14. Read File Record(0x14)
+15. Write File Record(0x15)
+16. Mask Write Register(0x16)
+17. Read Write Multiple Registers(0x17)
+18. Read Fifo Queue(0x18)
+19. Encapsulated Interface Transport(0x2B, Read Device Identification interface, (0x2B / 0x0E))
