@@ -56,7 +56,7 @@ public class HitechDataPublisherModbus {
                                         .build();
 
         SerialParameters sp = new SerialParameters();
-        int slaveId;
+        int modbusSlaveId;
         // Load modbus agent properties from file
         try {
             FileInputStream fis = new FileInputStream("conf/data-publisher.conf.properties");
@@ -67,6 +67,8 @@ public class HitechDataPublisherModbus {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+
+        ModbusMaster m = null;
 
         // Set serial communication parameters
         try {
@@ -115,9 +117,9 @@ public class HitechDataPublisherModbus {
 
             // Set Slave ID
             if (agentProperties.get(MODBUS_COMMUNICATION_PLC_SLAVE_ID) != null && agentProperties.get(MODBUS_COMMUNICATION_PLC_SLAVE_ID) instanceof String) {
-                slaveId = Integer.parseInt((String) agentProperties.get(MODBUS_COMMUNICATION_PLC_SLAVE_ID));
+                modbusSlaveId = Integer.parseInt((String) agentProperties.get(MODBUS_COMMUNICATION_PLC_SLAVE_ID));
             } else {
-                slaveId = 1;
+                modbusSlaveId = 1;
             }
 
             //Load data mapping properties
@@ -137,73 +139,94 @@ public class HitechDataPublisherModbus {
                 slaveIds = "1";
             }
             String[] slaveIdArray = slaveIds.split(",");
-            // Instantiate maps
+            // Instantiate maps for each modbus slave
             Map<String, HashMap> slaveMaps = new HashMap<String, HashMap>();
-            for (int i = 0; i < slaveIdArray.length; i++) {
-                HashMap<String, String> slaveMap = new HashMap<String, String>();
-                slaveMaps.put(slaveIdArray[i].trim(), slaveMap);
+            for (String aSlaveIdArray : slaveIdArray) {
+                slaveMaps.put(aSlaveIdArray.trim(), new HashMap<String, String>());
             }
             // populate maps
             for (Entry<Object, Object> keyVal : dataMappingProperties.entrySet()) {
-                HashMap<String, String> kayValMap;
                 String key = (String) keyVal.getKey();
                 String val = (String) keyVal.getValue();
                 if (!key.startsWith("slave")) {
-                    String[] splittedKey = key.split("-");
-                    kayValMap = slaveMaps.get(splittedKey[0].trim());
-                    kayValMap.put(splittedKey[1].trim(), val.trim());
+                    String[] splitKey = key.split("-");
+                    slaveMaps.get(splitKey[0].trim()).put(splitKey[1].trim(), val.trim());
                 }
             }
 
+            // DS to hold previous values of each sensor
+            HashMap<String, Integer> previousValues = new HashMap<>();
+
+            m = ModbusMasterFactory.createModbusMasterRTU(sp);
+            m.setResponseTimeout(500);
+            m.connect();
+
             // push data
             while(true) {
-                for (String slaveIdArray1 : slaveIdArray) {
+                for (String slaveId : slaveIdArray) {
                     HashMap<String, String> kayValMap;
-                    kayValMap = slaveMaps.get(slaveIdArray1.trim());
+                    kayValMap = slaveMaps.get(slaveId.trim());
                     for (Entry<String, String> entry : kayValMap.entrySet()) {
                         String key = entry.getKey();
-                        String value = entry.getValue();
+                        String tagValue = entry.getValue();
 
-                        ModbusMaster m = ModbusMasterFactory.createModbusMasterRTU(sp);
-                        m.connect();
+
                         try {
                             // at next string we receive ten registers from a slave with id of 1 at offset of 0.
-                            int[] registerValues = m.readHoldingRegisters(slaveId, getOffset(key), 1);
+                            int[] registerValues = m.readHoldingRegisters(modbusSlaveId, getOffset(key), 1);
                             // print values
-                            for (int valueCount : registerValues) {
-                                System.out.println("Address: " + key + ", Value: " + valueCount);
-                                Point point1 = Point.measurement(key)
+                            for (int value : registerValues) {
+                                // check with previous values
+                                String completeKey = slaveId + "-" + key;
+                                if (previousValues.containsKey(completeKey)) {
+                                    if (value != previousValues.get(completeKey)) {
+                                        System.out.println("Address: " + key + ", Value: " + value);
+                                        Point point1 = Point.measurement(tagValue)
                                                 .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-                                                .addField("value", valueCount)
+                                                .addField("value", value)
                                                 .build();
 
-                                batchPoints.point(point1);
-                                influxDB.write(batchPoints);
+                                        batchPoints.point(point1);
+                                        influxDB.write(batchPoints);
+
+                                        // update previous value map
+                                        previousValues.put(completeKey, value);
+                                    }
+                                } else {
+                                    System.out.println("Address: " + key + ", Value: " + value);
+                                    Point point1 = Point.measurement(tagValue)
+                                            .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+                                            .addField("value", value)
+                                            .build();
+
+                                    batchPoints.point(point1);
+                                    influxDB.write(batchPoints);
+
+                                    // update previous value map
+                                    previousValues.put(completeKey, value);
+                                }
+
                             }
-                        } catch (RuntimeException e) {
-                            e.printStackTrace();
-                        } catch (ModbusIOException e) {
-                            e.printStackTrace();
-                        } catch (ModbusNumberException e) {
-                            e.printStackTrace();
-                        } catch (ModbusProtocolException e) {
-                            e.printStackTrace();
-                        } finally {
-                            try {
-                                m.disconnect();
-                            } catch (ModbusIOException e1) {
-                                e1.printStackTrace();
-                            }
+                        } catch (RuntimeException | ModbusIOException | ModbusProtocolException | ModbusNumberException e) {
+                            System.out.println("Error");
+//                            e.printStackTrace();
                         }
                     }
                 }
-                TimeUnit.SECONDS.sleep(10);
+//                TimeUnit.SECONDS.sleep(1);
             }
 
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            try {
+                m.disconnect();
+                System.out.println("Connection closed");
+            } catch (ModbusIOException e1) {
+                e1.printStackTrace();
+            }
         }
     }
 
@@ -225,12 +248,12 @@ public class HitechDataPublisherModbus {
         int offset = 0;
         if (key.contains("fd")) {
             String keyVal = key.replace("fd", "");
-            // TODO 18432 can be changed to PLC o PLC.Ned to get from properties file
+            // TODO 18432 can be changed from PLC to PLC. Need to get from properties file
             offset = 18432 + Integer.parseInt(keyVal);
         } else if (key.contains("d")) {
             String keyVal = key.replace("d", "");
-            // TODO 16384 can be changed to PLC o PLC.Ned to get from properties file
-            offset = 16384 + Integer.parseInt(keyVal);
+            // TODO 0 can be changed from PLC to PLC. Need to get from properties file
+            offset = 0 + Integer.parseInt(keyVal);
         }
         return offset;
     }
